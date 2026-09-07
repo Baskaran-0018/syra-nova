@@ -1,0 +1,6 @@
+{
+  "name": "SYRA NOVA",
+  "description": "AI-Powered Cyber Security & Digital Identity Protection platform with real-time scam shield, deepfake detection, identity guardian, browser shield, and emergency recovery.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
