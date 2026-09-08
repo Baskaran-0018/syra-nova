@@ -143,7 +143,7 @@ export const HistoryPage: React.FC = () => {
         totalRecords: searchHistory.length,
         threatsIdentified: threatCount,
         safeRecords: safeCount,
-        exportedBy: "Dr. Baskaran J.",
+        exportedBy: "DEVASHREE",
       },
     });
     showToast("Audit Log Exported", `Saved ${searchHistory.length} audit records in ${format.toUpperCase()} format.`, "success");

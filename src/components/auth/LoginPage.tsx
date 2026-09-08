@@ -38,9 +38,9 @@ export const LoginPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"quick" | "email">("quick");
 
   // Form Fields
-  const [email, setEmail] = useState(user?.email || "baskaran.j0018@gmail.com");
+  const [email, setEmail] = useState(user?.email || "devashree@gmail.com");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState(user?.name || "");
+  const [fullName, setFullName] = useState(user?.name || "DEVASHREE");
   const [phone, setPhone] = useState(user?.phone || "+91 98401 23456");
   const [country, setCountry] = useState("India");
   const [rememberMe, setRememberMe] = useState(true);
@@ -95,10 +95,10 @@ export const LoginPage: React.FC = () => {
     setTimeout(() => {
       setIsVerifying(false);
       setLoadingProvider(null);
-      const chosenEmail = selectedEmail || "baskaran.j0018@gmail.com";
+      const chosenEmail = selectedEmail || "devashree@gmail.com";
       setUser({
         id: "USR-GGL-8421",
-        name: chosenEmail.includes("baskaran") ? "Dr. Baskaran J." : "Google User",
+        name: chosenEmail.includes("devashree") ? "DEVASHREE" : "Google User",
         email: chosenEmail,
         phone: "+91 98401 23456",
         avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
@@ -125,10 +125,10 @@ export const LoginPage: React.FC = () => {
     setTimeout(() => {
       setIsVerifying(false);
       setLoadingProvider(null);
-      const emailToUse = appleShareEmail === "share" ? "baskaran.j0018@privaterelay.appleid.com" : "user_8913@privaterelay.appleid.com";
+      const emailToUse = appleShareEmail === "share" ? "devashree@privaterelay.appleid.com" : "user_8913@privaterelay.appleid.com";
       setUser({
         id: "USR-APL-9021",
-        name: "Dr. Baskaran J. (Apple)",
+        name: "DEVASHREE (Apple)",
         email: emailToUse,
         phone: "+91 98401 23456",
         avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
@@ -191,8 +191,8 @@ export const LoginPage: React.FC = () => {
       setIsVerifying(false);
       setUser({
         id: "USR-94821",
-        name: fullName || "Dr. Baskaran J.",
-        email: email || "baskaran.j0018@gmail.com",
+        name: fullName || "DEVASHREE",
+        email: email || "devashree@gmail.com",
         phone: phone || "+91 98401 23456",
         avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         role: "Cyber Expert",
@@ -218,8 +218,8 @@ export const LoginPage: React.FC = () => {
       setLoadingProvider(null);
       setUser({
         id: "USR-94821",
-        name: "Dr. Baskaran J.",
-        email: "baskaran.j0018@gmail.com",
+        name: "DEVASHREE",
+        email: "devashree@gmail.com",
         phone: "+91 98401 23456",
         avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         role: "Cyber Expert",
@@ -390,7 +390,7 @@ export const LoginPage: React.FC = () => {
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-400">
-                          Instant sync with baskaran.j0018@gmail.com
+                          Instant sync with devashree@gmail.com
                         </p>
                       </div>
                     </div>
@@ -659,7 +659,7 @@ export const LoginPage: React.FC = () => {
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Dr. Baskaran J."
+                      placeholder="DEVASHREE"
                       className="w-full bg-slate-800/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
                     />
                   </div>
@@ -676,7 +676,7 @@ export const LoginPage: React.FC = () => {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="baskaran.j0018@gmail.com"
+                      placeholder="devashree@gmail.com"
                       className="w-full bg-slate-800/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
                     />
                   </div>
@@ -1035,20 +1035,20 @@ export const LoginPage: React.FC = () => {
 
             {/* Account List */}
             <div className="py-4 space-y-2">
-              {/* Account 1: Dr. Baskaran J */}
+              {/* Account 1: DEVASHREE */}
               <button
                 type="button"
-                onClick={() => handleGoogleSignIn("baskaran.j0018@gmail.com")}
+                onClick={() => handleGoogleSignIn("devashree@gmail.com")}
                 className="w-full flex items-center gap-3.5 p-3 rounded-2xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-                  B
+                  D
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">
-                    Dr. Baskaran J.
+                    DEVASHREE
                   </p>
-                  <p className="text-[11px] text-slate-500 truncate">baskaran.j0018@gmail.com</p>
+                  <p className="text-[11px] text-slate-500 truncate">devashree@gmail.com</p>
                 </div>
                 <span className="text-[10px] font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
                   Primary
@@ -1140,7 +1140,7 @@ export const LoginPage: React.FC = () => {
               >
                 <div>
                   <p className="font-bold text-white">Share My Email</p>
-                  <p className="text-[11px] text-neutral-400">baskaran.j0018@gmail.com</p>
+                  <p className="text-[11px] text-neutral-400">devashree@gmail.com</p>
                 </div>
                 {appleShareEmail === "share" && <Check className="w-4 h-4 text-white" />}
               </label>

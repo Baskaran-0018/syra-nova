@@ -22,9 +22,9 @@ export const AuthModal: React.FC = () => {
   const { setCurrentView, setUser, showToast } = useApp();
   const [authMode, setAuthMode] = useState<"login" | "signup" | "otp" | "forgot" | "mfa">("login");
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("baskaran.j0018@gmail.com");
+  const [email, setEmail] = useState("devashree@gmail.com");
   const [password, setPassword] = useState("••••••••••••");
-  const [fullName, setFullName] = useState("Dr. Baskaran J.");
+  const [fullName, setFullName] = useState("DEVASHREE");
   const [phone, setPhone] = useState("+91 98401 23456");
   const [country, setCountry] = useState("India");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -68,8 +68,8 @@ export const AuthModal: React.FC = () => {
       setIsVerifying(false);
       setUser({
         id: "USR-94821",
-        name: fullName || "Dr. Baskaran J.",
-        email: email || "baskaran.j0018@gmail.com",
+        name: fullName || "DEVASHREE",
+        email: email || "devashree@gmail.com",
         phone: phone || "+91 98401 23456",
         avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
         role: "Cyber Expert",
@@ -305,7 +305,7 @@ export const AuthModal: React.FC = () => {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Dr. Baskaran J."
+                    placeholder="DEVASHREE"
                     className="w-full bg-slate-800/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
                   />
                 </div>

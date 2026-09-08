@@ -1055,7 +1055,7 @@ export const PasswordVaultPage: React.FC = () => {
                   required
                   value={formData.usernameOrEmail}
                   onChange={(e) => setFormData({ ...formData, usernameOrEmail: e.target.value })}
-                  placeholder="e.g. @baskaran_official or baskaran.j0018@gmail.com"
+                  placeholder="e.g. @devashree_official or devashree@gmail.com"
                   className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-cyan-500"
                 />
               </div>

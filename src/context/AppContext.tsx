@@ -80,8 +80,8 @@ const defaultSettings: SettingsState = {
 
 const initialUser: UserProfile = {
   id: "USR-0001",
-  name: "Baskaran J.",
-  email: "baskaran.j0018@gmail.com",
+  name: "DEVASHREE",
+  email: "devashree@gmail.com",
   phone: "+91 98401 23456",
   avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
   role: "User",
