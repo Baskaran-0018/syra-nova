@@ -214,72 +214,232 @@ export async function analyzeMessageWithAI(
 }
 
 /**
+/**
  * Intelligent Social Profile & Bot Detector
+ * Accurately classifies Fake Accounts, Impersonators, Bot Swarms, Romance Scams,
+ * Fake Bank Helplines, and Authentic Profiles.
  */
 export async function analyzeProfileWithAI(
   target: string,
   platform: string,
   details = ""
 ): Promise<ProfileAnalysisResult> {
-  const lower = (target + " " + details).toLowerCase();
+  const cleanTarget = target.trim();
+  const cleanDetails = details.trim();
+  const combined = `${cleanTarget} ${cleanDetails}`.toLowerCase();
+
+  // 1. Try Server API Endpoint (Gemini AI Powered)
+  try {
+    const response = await fetch("/api/analyze/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: cleanTarget.startsWith("@") ? cleanTarget : `@${cleanTarget}`,
+        url: cleanTarget.startsWith("http") ? cleanTarget : undefined,
+        platform,
+        details: cleanDetails,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (typeof data.authenticityScore === "number" && data.verdict) {
+        return data;
+      }
+    }
+  } catch (apiErr) {
+    console.warn("Backend profile API unreachable, utilizing built-in forensic intelligence:", apiErr);
+  }
+
+  // 2. COMPREHENSIVE LOCAL FORENSIC HEURISTIC ENGINE
+
   const flags: string[] = [];
-  let authScore = 88;
+  let deduction = 0;
+  let detectedCategory = "Profile Assessment";
 
-  const isBotKeywords =
-    lower.includes("crypto") ||
-    lower.includes("forex") ||
-    lower.includes("dm for collab") ||
-    lower.includes("investment gift") ||
-    lower.includes("giveaway official") ||
-    lower.includes("telegram.me");
+  // A. Impersonation & Cloned Entity Indicators
+  const brandKeywords = [
+    "support", "helpdesk", "customercare", "helpline", "official", "care", "service",
+    "apple", "google", "meta", "instagram", "facebook", "twitter", "x", "telegram",
+    "binance", "coinbase", "sbi", "hdfc", "icici", "axis", "paytm", "phonepe", "gpay",
+    "amazon", "flipkart", "netflix", "paypal", "microsoft", "elon", "tesla", "spacex",
+    "mrbeast", "crypto", "forex", "airdrop", "giveaway", "winner"
+  ];
 
-  const isImpersonator =
-    lower.includes("official_") &&
-    (lower.includes("backup") || lower.includes("temp") || lower.includes("fanpage"));
+  const impersonatorSuffixes = [
+    "_official", "_support", "_help", "_customercare", "_care", "_24x7", "_desk",
+    "_backup", "_temp", "_fanpage", "_real", "_original", "_team", "_mod", "_admin",
+    "_winner", "_claim", "_airdrop", "_bonus", "_refund", "_dept", "_officia1", "_supp0rt"
+  ];
 
-  if (isBotKeywords) {
-    flags.push("High-frequency spam & crypto solicitation keywords");
-    flags.push("External unverified chat links (Telegram / WhatsApp)");
-    authScore -= 50;
+  const hasImpersonatorHandle = impersonatorSuffixes.some((s) => cleanTarget.toLowerCase().includes(s));
+  const hasBrandKeyword = brandKeywords.some((b) => cleanTarget.toLowerCase().includes(b));
+
+  // Check for fake official / customer care accounts
+  if (
+    (hasImpersonatorHandle && hasBrandKeyword) ||
+    (combined.includes("customer care") || combined.includes("toll free") || combined.includes("24x7 helpline") || combined.includes("refund support"))
+  ) {
+    deduction += 65;
+    flags.push("High-Risk Impersonation Handle / Fake Support Desk");
+    flags.push("Unverified Customer Care / Helpline Pattern");
+    detectedCategory = "Fake Customer Support Impersonation";
   }
-  if (isImpersonator) {
-    flags.push("Impersonation handle pattern");
-    flags.push("Mismatched identity markers");
-    authScore -= 40;
+
+  // B. Crypto / Investment / Forex Scam Indicators
+  const isCryptoScam =
+    combined.includes("crypto") ||
+    combined.includes("forex") ||
+    combined.includes("binary option") ||
+    combined.includes("mining pool") ||
+    combined.includes("guaranteed profit") ||
+    combined.includes("earn $") ||
+    combined.includes("earn ₹") ||
+    combined.includes("passive income") ||
+    combined.includes("investment plan") ||
+    combined.includes("fx_") ||
+    combined.includes("trader_") ||
+    combined.includes("signals") ||
+    combined.includes("airdrop");
+
+  if (isCryptoScam) {
+    deduction += 60;
+    flags.push("High-Frequency Crypto/Forex Solicitation Signature");
+    flags.push("Unregulated Financial Investment Bait in Bio/Handle");
+    detectedCategory = "Crypto & Investment Fraud";
   }
 
-  const finalScore = Math.min(Math.max(authScore, 10), 96);
+  // C. Prize / Lottery / Giveaway Scams
+  const isGiveawayScam =
+    combined.includes("giveaway") ||
+    combined.includes("congratulations you won") ||
+    combined.includes("winner claim") ||
+    combined.includes("lucky draw") ||
+    combined.includes("free iphone") ||
+    combined.includes("dm to claim") ||
+    combined.includes("send screenshot to claim");
+
+  if (isGiveawayScam) {
+    deduction += 60;
+    flags.push("Advance-Fee Prize / Giveaway Lure Detected");
+    flags.push("Unsolicited Winner Notification Pattern");
+    detectedCategory = "Fake Giveaway & Lottery Clone";
+  }
+
+  // D. Romance Scam / Catfishing Signals
+  const isRomanceScam =
+    (combined.includes("army") || combined.includes("military") || combined.includes("peacekeeping") || combined.includes("syria") || combined.includes("surgeon") || combined.includes("widower") || combined.includes("widowed")) &&
+    (combined.includes("honest") || combined.includes("soulmate") || combined.includes("whatsapp") || combined.includes("looking for love") || combined.includes("deploy"));
+
+  if (isRomanceScam) {
+    deduction += 65;
+    flags.push("Military / Surgeon Romance Catfishing Profile Profile Signature");
+    flags.push("Rapid Personal Intimacy & Off-Platform Redirection");
+    detectedCategory = "Romance & Catfish Account";
+  }
+
+  // E. Bot / Burner Synthetics & Numbers in Username
+  const digitMatches = cleanTarget.match(/\d+/g);
+  const totalDigits = digitMatches ? digitMatches.join("").length : 0;
+  const isBotSyntax =
+    totalDigits >= 5 ||
+    cleanTarget.toLowerCase().includes("bot_") ||
+    cleanTarget.toLowerCase().includes("_bot") ||
+    cleanTarget.toLowerCase().startsWith("user_") ||
+    cleanTarget.toLowerCase().startsWith("user");
+
+  if (isBotSyntax) {
+    deduction += 35;
+    flags.push("Synthetic Bot / Burner Account Handle Format");
+    flags.push("High trailing digit count indicating automated account generator");
+  }
+
+  // F. Suspicious Off-Platform Redirection Links
+  const hasSuspiciousLinks =
+    combined.includes("t.me/") ||
+    combined.includes("telegram.me") ||
+    combined.includes("wa.me/") ||
+    combined.includes("bit.ly") ||
+    combined.includes("tinyurl") ||
+    combined.includes(".xyz") ||
+    combined.includes(".top") ||
+    combined.includes(".ru") ||
+    combined.includes("linktr.ee/free") ||
+    combined.includes("cashapp") ||
+    combined.includes("onlyfans.com/free");
+
+  if (hasSuspiciousLinks) {
+    deduction += 40;
+    flags.push("External Unverified Redirection Link (Telegram/WhatsApp/Link Shortener)");
+    flags.push("Off-platform communication trap to evade moderation");
+  }
+
+  // G. Follower / Ratio Anomaly (if user provided details like followers: 10, following: 4000)
+  if (
+    (combined.includes("following 1000") || combined.includes("following 2000") || combined.includes("following 3000") || combined.includes("following 4000") || combined.includes("following 5000")) &&
+    (combined.includes("0 followers") || combined.includes("5 followers") || combined.includes("10 followers") || combined.includes("12 followers") || combined.includes("few followers"))
+  ) {
+    deduction += 45;
+    flags.push("Severe Follower-to-Following Imbalance (Follow-Spam Strategy)");
+  }
+
+  // Calculate final Authenticity Score
+  let baseScore = 94;
+  let finalAuthenticity = Math.max(baseScore - deduction, 6);
+
+  // Organic Benign Fast-Pass for clean everyday usernames
+  const isCleanTarget =
+    !hasImpersonatorHandle &&
+    !isCryptoScam &&
+    !isGiveawayScam &&
+    !isRomanceScam &&
+    !isBotSyntax &&
+    !hasSuspiciousLinks &&
+    deduction === 0;
+
+  if (isCleanTarget) {
+    finalAuthenticity = 95;
+    flags.push("Organic username structure", "No automated bot traits detected", "Consistent public handle format", "Clean profile metadata");
+  }
+
   let verdict: "Genuine" | "Suspicious" | "Fake Profile Detected" = "Genuine";
 
-  if (finalScore < 45) {
+  if (finalAuthenticity <= 40) {
     verdict = "Fake Profile Detected";
-  } else if (finalScore < 70) {
+  } else if (finalAuthenticity <= 70) {
     verdict = "Suspicious";
   } else {
-    flags.push("Organic username pattern", "No bot keywords detected", "Clean account profile metadata");
+    verdict = "Genuine";
   }
 
   return {
-    authenticityScore: finalScore,
+    authenticityScore: finalAuthenticity,
     verdict,
-    confidence: 90,
+    confidence: verdict === "Fake Profile Detected" ? 95 : verdict === "Suspicious" ? 86 : 92,
     riskIndicators: flags,
     explanation:
-      verdict === "Genuine"
-        ? `The profile @${target} displays standard organic attributes with zero detected bot or impersonation signals.`
+      verdict === "Fake Profile Detected"
+        ? `High-risk indicators identified on ${cleanTarget}. The profile exhibits classic patterns of ${detectedCategory}, including suspicious handle naming, off-platform redirection links, or automated bot characteristics.`
         : verdict === "Suspicious"
-        ? `Several irregular public attributes or external redirection links were detected on @${target}. Exercise caution.`
-        : `High probability of synthetic bot account or impersonation campaign detected on @${target}.`,
+        ? `Potential irregularities detected on ${cleanTarget}. The account features elevated automated traits, unverified contact links, or non-standard follower patterns. Exercise strong caution before interacting.`
+        : `The profile ${cleanTarget} displays standard organic behavioral attributes, healthy identity metadata, and zero detected impersonation or scam triggers.`,
     recommendations:
-      verdict === "Genuine"
+      verdict === "Fake Profile Detected"
         ? [
-            "Standard social safety practices apply.",
-            "Verify identity before conducting financial transactions.",
+            "Do NOT click any bio links, payment links, or external chat invitations (Telegram/WhatsApp).",
+            "Never send money, OTPs, gift cards, or cryptocurrency to this account.",
+            "Report the profile immediately to the platform moderation team and block the user.",
+            "If this account claims to be a brand or bank, verify through their official website or verified toll-free number.",
+          ]
+        : verdict === "Suspicious"
+        ? [
+            "Request video verification or contact through an alternate verified platform before engaging.",
+            "Avoid sharing personal identity, workplace, or financial information.",
+            "Examine follower comments and engagement history to verify authenticity.",
           ]
         : [
-            "Do not click unsolicited bio links or download files.",
-            "Avoid sharing personal identity or financial information.",
-            "Block and report the account to the platform moderation team.",
+            "Standard online privacy and security practices apply.",
+            "Always verify identity before engaging in peer-to-peer financial transactions.",
           ],
   };
 }

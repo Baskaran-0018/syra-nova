@@ -56,6 +56,10 @@ export const FakeProfileDetectorPage: React.FC = () => {
   const [inputMode, setInputMode] = useState<"url" | "username" | "screenshot">("url");
   const [profileUrl, setProfileUrl] = useState("");
   const [username, setUsername] = useState("");
+  const [profileBio, setProfileBio] = useState("");
+  const [followersCount, setFollowersCount] = useState("");
+  const [followingCount, setFollowingCount] = useState("");
+  const [showAdvancedStats, setShowAdvancedStats] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState("Instagram");
   const [screenshotPreview, setScreenshotPreview] = useState<{ name: string; url: string } | null>(null);
 
@@ -69,6 +73,86 @@ export const FakeProfileDetectorPage: React.FC = () => {
   const [historyPlatform, setHistoryPlatform] = useState("All");
 
   const [tipIndex, setTipIndex] = useState(0);
+
+  // Quick Test Demo Profiles for immediate 1-click testing
+  const demoProfiles = [
+    {
+      label: "Fake Bank Support",
+      type: "fake",
+      platform: "Instagram",
+      handle: "@sbi_customercare_24x7_support",
+      bio: "24x7 Official Helpline for SBI Bank. Urgent KYC updates, unblock accounts, instant refund support. Call or WhatsApp toll-free: wa.me/+919876543210",
+      followers: "14",
+      following: "4,850",
+    },
+    {
+      label: "Celebrity Crypto Scam",
+      type: "fake",
+      platform: "X (Twitter)",
+      handle: "@elonmusk_airdrop_official",
+      bio: "Official Tesla & SpaceX 5,000 BTC / ETH Giveaway! Send 0.1 BTC to get 0.2 BTC back instantly. Claim now: bit.ly/tesla-airdrop-win",
+      followers: "28",
+      following: "3,200",
+    },
+    {
+      label: "Romance Catfish Bot",
+      type: "fake",
+      platform: "Facebook",
+      handle: "@dr_richard_army_surgeon",
+      bio: "US Army Chief Medical Surgeon stationed on peacekeeping mission in Syria. Widower looking for an honest and sincere woman for true love. DM on WhatsApp.",
+      followers: "5",
+      following: "1,980",
+    },
+    {
+      label: "Giveaway / Prize Scam",
+      type: "fake",
+      platform: "Instagram",
+      handle: "@amazon_lucky_winner_claim2025",
+      bio: "Congratulations! You won the iPhone 16 Pro Diwali Lucky Draw. Send screenshot and pay ₹499 processing gas fee to receive your parcel: t.me/claimprize",
+      followers: "42",
+      following: "4,100",
+    },
+    {
+      label: "Suspicious Deal Bot",
+      type: "suspicious",
+      platform: "Telegram",
+      handle: "@hot_deals_loot_bot9841",
+      bio: "Daily loot deals & 90% discount cashback coupons. Click link to download cash app APK bit.ly/hotdeal-apk",
+      followers: "120",
+      following: "950",
+    },
+    {
+      label: "Legitimate Creator",
+      type: "genuine",
+      platform: "YouTube",
+      handle: "@mkbhd",
+      bio: "Quality tech videos | YouTuber | Host of Waveform Podcast | Ultimate Frisbee player",
+      followers: "18.5M",
+      following: "420",
+    },
+    {
+      label: "Official Brand",
+      type: "genuine",
+      platform: "Instagram",
+      handle: "@google",
+      bio: "Official account for Google. Organizing the world's information and making it universally accessible and useful.",
+      followers: "15.2M",
+      following: "85",
+    },
+  ];
+
+  const handleSelectDemo = (demo: typeof demoProfiles[0]) => {
+    setSelectedPlatform(demo.platform);
+    setInputMode("username");
+    setUsername(demo.handle);
+    setProfileUrl(`https://${demo.platform.toLowerCase().replace(/[^a-z]/g, "")}.com/${demo.handle.replace("@", "")}`);
+    setProfileBio(demo.bio);
+    setFollowersCount(demo.followers);
+    setFollowingCount(demo.following);
+    setShowAdvancedStats(true);
+    setErrorMessage(null);
+    showToast("Sample Loaded", `Loaded sample account ${demo.handle} (${demo.label})`, "info");
+  };
 
   const platforms = [
     { name: "Instagram", icon: Instagram, color: "from-pink-500 to-purple-600" },
@@ -153,6 +237,21 @@ export const FakeProfileDetectorPage: React.FC = () => {
       target = `Screenshot: ${screenshotPreview.name}`;
     }
 
+    // Compose rich detail metadata
+    let detailsString = "";
+    if (inputMode === "screenshot") {
+      detailsString = "Uploaded profile capture with bio and follow ratios.";
+    }
+    if (profileBio.trim()) {
+      detailsString += ` Bio: "${profileBio.trim()}".`;
+    }
+    if (followersCount.trim()) {
+      detailsString += ` Followers: ${followersCount.trim()}.`;
+    }
+    if (followingCount.trim()) {
+      detailsString += ` Following: ${followingCount.trim()}.`;
+    }
+
     setIsAnalyzing(true);
     setLoadingStage(0);
 
@@ -164,7 +263,7 @@ export const FakeProfileDetectorPage: React.FC = () => {
       const data = await analyzeProfileWithAI(
         target,
         selectedPlatform,
-        inputMode === "screenshot" ? "Uploaded profile capture with bio and follow ratios" : ""
+        detailsString
       );
       clearInterval(stageInterval);
 
@@ -184,7 +283,7 @@ export const FakeProfileDetectorPage: React.FC = () => {
       setActiveResult(savedRecord);
       showToast(
         "Profile Analyzed",
-        `Authenticity Verdict: ${savedRecord.verdict} (${data.authenticityScore}% Authentic)`,
+        `Verdict: ${savedRecord.verdict} (${data.authenticityScore}% Authentic)`,
         data.verdict === "Genuine" ? "success" : data.verdict === "Suspicious" ? "warning" : "error"
       );
     } catch (err) {
@@ -266,7 +365,7 @@ Verified by SYRA NOVA Neural Social Guard v1.0
               Fake Profile Detector
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-              Analyze suspicious social media profiles using AI.
+              Analyze suspicious social media accounts, impersonators, bot swarms, and catfishing profiles using AI.
             </p>
           </div>
         </div>
@@ -308,6 +407,37 @@ Verified by SYRA NOVA Neural Social Guard v1.0
           >
             <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           </div>
+        </div>
+      </div>
+
+      {/* Quick Test Demo Samples Banner */}
+      <div className="p-4 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            Test Instant Scenarios (Click to auto-fill & verify):
+          </span>
+          <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">Live Forensic Testing</span>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          {demoProfiles.map((demo, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => handleSelectDemo(demo)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${
+                demo.type === "fake"
+                  ? "bg-red-500/10 hover:bg-red-500/20 text-red-300 border-red-500/30"
+                  : demo.type === "suspicious"
+                  ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30"
+                  : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${demo.type === "fake" ? "bg-red-400" : demo.type === "suspicious" ? "bg-amber-400" : "bg-emerald-400"}`}></span>
+              <span>{demo.label}</span>
+              <span className="text-[10px] opacity-60">({demo.handle})</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -421,13 +551,13 @@ Verified by SYRA NOVA Neural Social Guard v1.0
             {/* Option 2: Enter Username */}
             {inputMode === "username" && (
               <div className="space-y-2">
-                <label className="block text-xs font-semibold text-slate-300">Enter Username</label>
+                <label className="block text-xs font-semibold text-slate-300">Enter Username / Handle</label>
                 <div className="relative">
                   <AtSign className="w-4 h-4 text-cyan-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     id="profile-username-input"
-                    placeholder="@username"
+                    placeholder="@username (e.g. @sbi_support_official or @mkbhd)"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-xs sm:text-sm text-white placeholder-slate-500 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-500/20 transition-all font-mono"
@@ -496,6 +626,56 @@ Verified by SYRA NOVA Neural Social Guard v1.0
                 )}
               </div>
             )}
+
+            {/* Optional Bio & Profile Metadata Section */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedStats(!showAdvancedStats)}
+                className="flex items-center justify-between w-full text-xs font-semibold text-slate-400 hover:text-cyan-300 transition-colors"
+              >
+                <span>Add Bio Description & Follower Counts (Optional)</span>
+                <span className="text-cyan-400 font-mono text-[11px]">{showAdvancedStats ? "− Hide Details" : "+ Add Details"}</span>
+              </button>
+
+              {showAdvancedStats && (
+                <div className="mt-3 space-y-3 p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 animate-in fade-in duration-150">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">Profile Bio / Description</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Paste bio description, external contact numbers, links or suspicious promises..."
+                      value={profileBio}
+                      onChange={(e) => setProfileBio(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 resize-none font-sans"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">Followers Count</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 14 or 250k"
+                        value={followersCount}
+                        onChange={(e) => setFollowersCount(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">Following Count</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 4,500"
+                        value={followingCount}
+                        onChange={(e) => setFollowingCount(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Error Message Box */}
             {errorMessage && (
