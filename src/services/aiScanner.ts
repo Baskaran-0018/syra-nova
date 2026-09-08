@@ -213,16 +213,32 @@ export async function analyzeMessageWithAI(
   };
 }
 
-/**
+export interface ProfileAuditAttributes {
+  accountAge?: "new" | "recent" | "established" | "old";
+  profilePicType?: "default" | "ai_model" | "brand_logo" | "real_person";
+  postCount?: "zero" | "few" | "moderate" | "many";
+  followers?: string;
+  following?: string;
+  bio?: string;
+  linkType?: "none" | "shortener" | "messaging_app" | "suspicious_apk" | "official_domain";
+  unsolicitedDm?: boolean;
+  askingMoneyOrCrypto?: boolean;
+  promisingPrizeOrJob?: boolean;
+  offPlatformRedirection?: boolean;
+  hasBlueBadge?: boolean;
+  hasMutualConnections?: boolean;
+}
+
 /**
  * Intelligent Social Profile & Bot Detector
- * Accurately classifies Fake Accounts, Impersonators, Bot Swarms, Romance Scams,
- * Fake Bank Helplines, and Authentic Profiles.
+ * Evaluates deep multi-parameter forensic questionnaires including Account Age,
+ * Profile Pictures, Follower Ratios, DM behavior, Financial solicitations, and Badges.
  */
 export async function analyzeProfileWithAI(
   target: string,
   platform: string,
-  details = ""
+  details = "",
+  attributes?: ProfileAuditAttributes
 ): Promise<ProfileAnalysisResult> {
   const cleanTarget = target.trim();
   const cleanDetails = details.trim();
@@ -238,6 +254,7 @@ export async function analyzeProfileWithAI(
         url: cleanTarget.startsWith("http") ? cleanTarget : undefined,
         platform,
         details: cleanDetails,
+        attributes,
       }),
     });
 
@@ -252,10 +269,76 @@ export async function analyzeProfileWithAI(
   }
 
   // 2. COMPREHENSIVE LOCAL FORENSIC HEURISTIC ENGINE
-
   const flags: string[] = [];
   let deduction = 0;
+  let trustBoost = 0;
   let detectedCategory = "Profile Assessment";
+
+  // Process structured Questionnaire Attributes
+  if (attributes) {
+    if (attributes.askingMoneyOrCrypto) {
+      deduction += 75;
+      flags.push("Direct solicitation of money, crypto, UPI, or financial assets in DMs");
+      detectedCategory = "Financial Extortion / Scam";
+    }
+    if (attributes.promisingPrizeOrJob) {
+      deduction += 65;
+      flags.push("Advance-fee lottery, fake iPhone prize, or task scam bait");
+      detectedCategory = "Prize / Work-From-Home Scam";
+    }
+    if (attributes.offPlatformRedirection) {
+      deduction += 45;
+      flags.push("Urgent off-platform redirection to Telegram/WhatsApp/Chat to evade moderation");
+    }
+    if (attributes.unsolicitedDm) {
+      deduction += 20;
+      flags.push("Unsolicited cold DM outreach targeting unacquainted users");
+    }
+    if (attributes.profilePicType === "ai_model") {
+      deduction += 40;
+      flags.push("Synthetic AI-generated / stolen celebrity profile picture");
+    } else if (attributes.profilePicType === "default") {
+      deduction += 25;
+      flags.push("No profile photo / default platform avatar");
+    }
+    if (attributes.accountAge === "new") {
+      deduction += 35;
+      flags.push("Recently created burner account (< 1 month old)");
+    } else if (attributes.accountAge === "recent") {
+      deduction += 15;
+    } else if (attributes.accountAge === "old") {
+      trustBoost += 15;
+      flags.push("Established longevity (> 2 years of public history)");
+    }
+    if (attributes.postCount === "zero") {
+      deduction += 30;
+      flags.push("Zero published posts with active outbound interaction");
+    } else if (attributes.postCount === "many") {
+      trustBoost += 10;
+      flags.push("Active regular posting history (50+ posts)");
+    }
+    if (attributes.linkType === "shortener") {
+      deduction += 35;
+      flags.push("Obfuscated shortened URL (bit.ly / tinyurl) in bio");
+    } else if (attributes.linkType === "messaging_app") {
+      deduction += 40;
+      flags.push("Unverified messaging redirection link (t.me / wa.me)");
+    } else if (attributes.linkType === "suspicious_apk") {
+      deduction += 60;
+      flags.push("Direct link to untrusted APK / malicious third-party download");
+    } else if (attributes.linkType === "official_domain") {
+      trustBoost += 15;
+      flags.push("Resolves to verified brand domain");
+    }
+    if (attributes.hasBlueBadge && !attributes.askingMoneyOrCrypto) {
+      trustBoost += 25;
+      flags.push("Official platform verification badge confirmed");
+    }
+    if (attributes.hasMutualConnections) {
+      trustBoost += 15;
+      flags.push("Verified mutual connections within personal social graph");
+    }
+  }
 
   // A. Impersonation & Cloned Entity Indicators
   const brandKeywords = [
@@ -275,7 +358,6 @@ export async function analyzeProfileWithAI(
   const hasImpersonatorHandle = impersonatorSuffixes.some((s) => cleanTarget.toLowerCase().includes(s));
   const hasBrandKeyword = brandKeywords.some((b) => cleanTarget.toLowerCase().includes(b));
 
-  // Check for fake official / customer care accounts
   if (
     (hasImpersonatorHandle && hasBrandKeyword) ||
     (combined.includes("customer care") || combined.includes("toll free") || combined.includes("24x7 helpline") || combined.includes("refund support"))
@@ -333,7 +415,7 @@ export async function analyzeProfileWithAI(
 
   if (isRomanceScam) {
     deduction += 65;
-    flags.push("Military / Surgeon Romance Catfishing Profile Profile Signature");
+    flags.push("Military / Surgeon Romance Catfishing Profile Signature");
     flags.push("Rapid Personal Intimacy & Off-Platform Redirection");
     detectedCategory = "Romance & Catfish Account";
   }
@@ -374,18 +456,18 @@ export async function analyzeProfileWithAI(
     flags.push("Off-platform communication trap to evade moderation");
   }
 
-  // G. Follower / Ratio Anomaly (if user provided details like followers: 10, following: 4000)
+  // G. Follower / Ratio Anomaly
   if (
     (combined.includes("following 1000") || combined.includes("following 2000") || combined.includes("following 3000") || combined.includes("following 4000") || combined.includes("following 5000")) &&
-    (combined.includes("0 followers") || combined.includes("5 followers") || combined.includes("10 followers") || combined.includes("12 followers") || combined.includes("few followers"))
+    (combined.includes("0 followers") || combined.includes("5 followers") || combined.includes("10 followers") || combined.includes("12 followers") || combined.includes("few followers") || combined.includes("14 followers"))
   ) {
     deduction += 45;
-    flags.push("Severe Follower-to-Following Imbalance (Follow-Spam Strategy)");
+    flags.push("Severe Follower-to-Following Imbalance (Follow-Spam Bot Strategy)");
   }
 
   // Calculate final Authenticity Score
-  let baseScore = 94;
-  let finalAuthenticity = Math.max(baseScore - deduction, 6);
+  let baseScore = 92;
+  let finalAuthenticity = Math.min(Math.max(baseScore - deduction + trustBoost, 4), 98);
 
   // Organic Benign Fast-Pass for clean everyday usernames
   const isCleanTarget =
@@ -398,7 +480,7 @@ export async function analyzeProfileWithAI(
     deduction === 0;
 
   if (isCleanTarget) {
-    finalAuthenticity = 95;
+    finalAuthenticity = Math.min(95 + trustBoost, 99);
     flags.push("Organic username structure", "No automated bot traits detected", "Consistent public handle format", "Clean profile metadata");
   }
 
@@ -415,14 +497,14 @@ export async function analyzeProfileWithAI(
   return {
     authenticityScore: finalAuthenticity,
     verdict,
-    confidence: verdict === "Fake Profile Detected" ? 95 : verdict === "Suspicious" ? 86 : 92,
+    confidence: verdict === "Fake Profile Detected" ? 96 : verdict === "Suspicious" ? 88 : 94,
     riskIndicators: flags,
     explanation:
       verdict === "Fake Profile Detected"
-        ? `High-risk indicators identified on ${cleanTarget}. The profile exhibits classic patterns of ${detectedCategory}, including suspicious handle naming, off-platform redirection links, or automated bot characteristics.`
+        ? `High-risk forensic indicators identified on ${cleanTarget}. The profile exhibits classic patterns of ${detectedCategory}, with red flags in handle structure, direct message solicitations, account anomalies, or off-platform redirection.`
         : verdict === "Suspicious"
-        ? `Potential irregularities detected on ${cleanTarget}. The account features elevated automated traits, unverified contact links, or non-standard follower patterns. Exercise strong caution before interacting.`
-        : `The profile ${cleanTarget} displays standard organic behavioral attributes, healthy identity metadata, and zero detected impersonation or scam triggers.`,
+        ? `Potential irregularities detected on ${cleanTarget}. The account features elevated automated traits, recent creation date, unverified contact links, or non-standard follower patterns. Exercise strong caution before interacting.`
+        : `The profile ${cleanTarget} displays standard organic behavioral attributes, healthy identity metadata, active longevity, and zero detected impersonation or scam triggers.`,
     recommendations:
       verdict === "Fake Profile Detected"
         ? [

@@ -191,38 +191,57 @@ Respond ONLY with a valid JSON object matching this schema:
 
 // 2. Fake Profile Detector Endpoint
 app.post("/api/analyze/profile", async (req, res) => {
-  const { url, username, platform = "Instagram", details = "" } = req.body;
+  const { url, username, platform = "Instagram", details = "", attributes = {} } = req.body;
   const target = (username || url || "Unknown Profile").trim();
   const cleanDetails = (details || "").trim();
-  const combined = `${target} ${cleanDetails}`.toLowerCase();
+
+  // Format full forensic survey details for the AI
+  const surveyItems: string[] = [];
+  if (attributes.accountAge) surveyItems.push(`Account Age: ${attributes.accountAge}`);
+  if (attributes.profilePicType) surveyItems.push(`Profile Picture: ${attributes.profilePicType}`);
+  if (attributes.postCount) surveyItems.push(`Post History: ${attributes.postCount}`);
+  if (attributes.followers) surveyItems.push(`Followers: ${attributes.followers}`);
+  if (attributes.following) surveyItems.push(`Following: ${attributes.following}`);
+  if (attributes.linkType) surveyItems.push(`Bio External Links: ${attributes.linkType}`);
+  if (attributes.unsolicitedDm) surveyItems.push(`Unsolicited Outreach: YES (Sent cold DM)`);
+  if (attributes.askingMoneyOrCrypto) surveyItems.push(`Direct Financial Request: YES (Asked for Money/Crypto/UPI/Card/OTP)`);
+  if (attributes.promisingPrizeOrJob) surveyItems.push(`Prize/Job Lure: YES (Promised Lottery/Prize/High Returns)`);
+  if (attributes.offPlatformRedirection) surveyItems.push(`Off-Platform Redirection: YES (Urged to move to Telegram/WhatsApp)`);
+  if (attributes.hasBlueBadge) surveyItems.push(`Official Platform Verification Badge: Present`);
+  if (attributes.hasMutualConnections) surveyItems.push(`Known Mutual Connections: Present`);
+
+  const fullContext = [cleanDetails, surveyItems.join(" | ")].filter(Boolean).join("\nDetailed Profile Forensic Questionnaire:\n");
+  const combined = `${target} ${fullContext}`.toLowerCase();
 
   const ai = getAI();
   if (ai) {
     const modelsToTry = ["gemini-3.7-flash", "gemini-3.6-flash"];
     for (const modelName of modelsToTry) {
       try {
-        const prompt = `You are SYRA NOVA AI, an expert social media threat analyst and fake profile detector.
+        const prompt = `You are SYRA NOVA AI, an expert social media threat analyst and forensic fake profile detector.
 Analyze this social account profile accurately:
 Platform: ${platform}
 Target Handle/URL: ${target}
-Profile Bio / Stats / Description: ${cleanDetails}
+Profile Bio / Stats / Description / Forensic Questionnaire Data:
+${fullContext}
 
 ANALYSIS CRITERIA:
 1. "Fake Profile Detected" (authenticityScore: 5 to 35):
+   - Asking for money, crypto, gift cards, investment, or OTP in DMs.
+   - Promising fake lottery prizes, work-from-home tasks, or iPhone giveaways.
    - Impersonation of brands/celebrities/banks/customer support (e.g. adding _support, _official, _help, _24x7, _care, _airdrop, _claims to brand names).
    - Crypto / Forex / Binary investment solicitations, signals, mining pools, telegram links (t.me/, wa.me/).
    - Romance catfishing (military doctor/surgeon in Syria/deployment, asking for gift cards or off-platform WhatsApp).
    - Fake customer care desks offering refund helplines or toll-free numbers.
-   - Bot follower swarms (e.g. following 4,000+ with 10 followers, excessive numbers in username).
-   - Fake contest/giveaway winner notifications asking for fees or screenshots.
+   - Bot follower swarms (e.g. following 4,000+ with 10 followers, 0 posts, newly created account).
 
 2. "Suspicious" (authenticityScore: 40 to 68):
-   - Unverified promotional accounts, heavy affiliate link shorteners (bit.ly, tinyurl), excessive hashtags, unverified fan accounts.
+   - Unverified promotional accounts, heavy affiliate link shorteners (bit.ly, tinyurl), recent account with high following, unverified fan accounts.
 
 3. "Genuine" (authenticityScore: 75 to 98):
-   - Standard organic personal accounts, legitimate creators, authentic verified brand profiles without scam triggers.
+   - Standard organic personal accounts, legitimate creators, authentic verified brand profiles without scam triggers or financial solicitations.
 
-CRITICAL: If the target has scam/impersonation markers, classify as "Fake Profile Detected". If benign and organic, classify as "Genuine".
+CRITICAL: Weigh all provided forensic questionnaire responses (especially DM solicitation, account age, profile photo, and follower ratios).
 
 Respond strictly in JSON format matching this schema:
 {

@@ -59,9 +59,20 @@ export const FakeProfileDetectorPage: React.FC = () => {
   const [profileBio, setProfileBio] = useState("");
   const [followersCount, setFollowersCount] = useState("");
   const [followingCount, setFollowingCount] = useState("");
-  const [showAdvancedStats, setShowAdvancedStats] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState("Instagram");
   const [screenshotPreview, setScreenshotPreview] = useState<{ name: string; url: string } | null>(null);
+
+  // Deep Forensic Questionnaire State
+  const [accountAge, setAccountAge] = useState<"new" | "recent" | "established" | "old">("established");
+  const [profilePicType, setProfilePicType] = useState<"default" | "ai_model" | "brand_logo" | "real_person">("real_person");
+  const [postCount, setPostCount] = useState<"zero" | "few" | "moderate" | "many">("moderate");
+  const [linkType, setLinkType] = useState<"none" | "shortener" | "messaging_app" | "suspicious_apk" | "official_domain">("none");
+  const [unsolicitedDm, setUnsolicitedDm] = useState<boolean>(false);
+  const [askingMoneyOrCrypto, setAskingMoneyOrCrypto] = useState<boolean>(false);
+  const [promisingPrizeOrJob, setPromisingPrizeOrJob] = useState<boolean>(false);
+  const [offPlatformRedirection, setOffPlatformRedirection] = useState<boolean>(false);
+  const [hasBlueBadge, setHasBlueBadge] = useState<boolean>(false);
+  const [hasMutualConnections, setHasMutualConnections] = useState<boolean>(false);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingStage, setLoadingStage] = useState(0);
@@ -74,7 +85,7 @@ export const FakeProfileDetectorPage: React.FC = () => {
 
   const [tipIndex, setTipIndex] = useState(0);
 
-  // Quick Test Demo Profiles for immediate 1-click testing
+  // Quick Test Demo Profiles with complete forensic questionnaire profiles
   const demoProfiles = [
     {
       label: "Fake Bank Support",
@@ -84,6 +95,16 @@ export const FakeProfileDetectorPage: React.FC = () => {
       bio: "24x7 Official Helpline for SBI Bank. Urgent KYC updates, unblock accounts, instant refund support. Call or WhatsApp toll-free: wa.me/+919876543210",
       followers: "14",
       following: "4,850",
+      accountAge: "new" as const,
+      profilePicType: "brand_logo" as const,
+      postCount: "zero" as const,
+      linkType: "messaging_app" as const,
+      unsolicitedDm: true,
+      askingMoneyOrCrypto: true,
+      promisingPrizeOrJob: false,
+      offPlatformRedirection: true,
+      hasBlueBadge: false,
+      hasMutualConnections: false,
     },
     {
       label: "Celebrity Crypto Scam",
@@ -93,6 +114,16 @@ export const FakeProfileDetectorPage: React.FC = () => {
       bio: "Official Tesla & SpaceX 5,000 BTC / ETH Giveaway! Send 0.1 BTC to get 0.2 BTC back instantly. Claim now: bit.ly/tesla-airdrop-win",
       followers: "28",
       following: "3,200",
+      accountAge: "new" as const,
+      profilePicType: "ai_model" as const,
+      postCount: "few" as const,
+      linkType: "shortener" as const,
+      unsolicitedDm: true,
+      askingMoneyOrCrypto: true,
+      promisingPrizeOrJob: true,
+      offPlatformRedirection: false,
+      hasBlueBadge: false,
+      hasMutualConnections: false,
     },
     {
       label: "Romance Catfish Bot",
@@ -102,6 +133,16 @@ export const FakeProfileDetectorPage: React.FC = () => {
       bio: "US Army Chief Medical Surgeon stationed on peacekeeping mission in Syria. Widower looking for an honest and sincere woman for true love. DM on WhatsApp.",
       followers: "5",
       following: "1,980",
+      accountAge: "new" as const,
+      profilePicType: "ai_model" as const,
+      postCount: "few" as const,
+      linkType: "none" as const,
+      unsolicitedDm: true,
+      askingMoneyOrCrypto: true,
+      promisingPrizeOrJob: false,
+      offPlatformRedirection: true,
+      hasBlueBadge: false,
+      hasMutualConnections: false,
     },
     {
       label: "Giveaway / Prize Scam",
@@ -111,6 +152,16 @@ export const FakeProfileDetectorPage: React.FC = () => {
       bio: "Congratulations! You won the iPhone 16 Pro Diwali Lucky Draw. Send screenshot and pay ₹499 processing gas fee to receive your parcel: t.me/claimprize",
       followers: "42",
       following: "4,100",
+      accountAge: "new" as const,
+      profilePicType: "brand_logo" as const,
+      postCount: "zero" as const,
+      linkType: "messaging_app" as const,
+      unsolicitedDm: true,
+      askingMoneyOrCrypto: true,
+      promisingPrizeOrJob: true,
+      offPlatformRedirection: true,
+      hasBlueBadge: false,
+      hasMutualConnections: false,
     },
     {
       label: "Suspicious Deal Bot",
@@ -120,6 +171,16 @@ export const FakeProfileDetectorPage: React.FC = () => {
       bio: "Daily loot deals & 90% discount cashback coupons. Click link to download cash app APK bit.ly/hotdeal-apk",
       followers: "120",
       following: "950",
+      accountAge: "recent" as const,
+      profilePicType: "default" as const,
+      postCount: "few" as const,
+      linkType: "suspicious_apk" as const,
+      unsolicitedDm: true,
+      askingMoneyOrCrypto: false,
+      promisingPrizeOrJob: true,
+      offPlatformRedirection: false,
+      hasBlueBadge: false,
+      hasMutualConnections: false,
     },
     {
       label: "Legitimate Creator",
@@ -129,6 +190,16 @@ export const FakeProfileDetectorPage: React.FC = () => {
       bio: "Quality tech videos | YouTuber | Host of Waveform Podcast | Ultimate Frisbee player",
       followers: "18.5M",
       following: "420",
+      accountAge: "old" as const,
+      profilePicType: "real_person" as const,
+      postCount: "many" as const,
+      linkType: "official_domain" as const,
+      unsolicitedDm: false,
+      askingMoneyOrCrypto: false,
+      promisingPrizeOrJob: false,
+      offPlatformRedirection: false,
+      hasBlueBadge: true,
+      hasMutualConnections: true,
     },
     {
       label: "Official Brand",
@@ -138,6 +209,16 @@ export const FakeProfileDetectorPage: React.FC = () => {
       bio: "Official account for Google. Organizing the world's information and making it universally accessible and useful.",
       followers: "15.2M",
       following: "85",
+      accountAge: "old" as const,
+      profilePicType: "brand_logo" as const,
+      postCount: "many" as const,
+      linkType: "official_domain" as const,
+      unsolicitedDm: false,
+      askingMoneyOrCrypto: false,
+      promisingPrizeOrJob: false,
+      offPlatformRedirection: false,
+      hasBlueBadge: true,
+      hasMutualConnections: true,
     },
   ];
 
@@ -149,9 +230,41 @@ export const FakeProfileDetectorPage: React.FC = () => {
     setProfileBio(demo.bio);
     setFollowersCount(demo.followers);
     setFollowingCount(demo.following);
-    setShowAdvancedStats(true);
+    
+    setAccountAge(demo.accountAge);
+    setProfilePicType(demo.profilePicType);
+    setPostCount(demo.postCount);
+    setLinkType(demo.linkType);
+    setUnsolicitedDm(demo.unsolicitedDm);
+    setAskingMoneyOrCrypto(demo.askingMoneyOrCrypto);
+    setPromisingPrizeOrJob(demo.promisingPrizeOrJob);
+    setOffPlatformRedirection(demo.offPlatformRedirection);
+    setHasBlueBadge(demo.hasBlueBadge);
+    setHasMutualConnections(demo.hasMutualConnections);
+    
     setErrorMessage(null);
     showToast("Sample Loaded", `Loaded sample account ${demo.handle} (${demo.label})`, "info");
+  };
+
+  const handleResetForm = () => {
+    setProfileUrl("");
+    setUsername("");
+    setProfileBio("");
+    setFollowersCount("");
+    setFollowingCount("");
+    setScreenshotPreview(null);
+    setAccountAge("established");
+    setProfilePicType("real_person");
+    setPostCount("moderate");
+    setLinkType("none");
+    setUnsolicitedDm(false);
+    setAskingMoneyOrCrypto(false);
+    setPromisingPrizeOrJob(false);
+    setOffPlatformRedirection(false);
+    setHasBlueBadge(false);
+    setHasMutualConnections(false);
+    setErrorMessage(null);
+    showToast("Form Reset", "Cleared all questionnaire and profile fields.", "info");
   };
 
   const platforms = [
@@ -263,7 +376,22 @@ export const FakeProfileDetectorPage: React.FC = () => {
       const data = await analyzeProfileWithAI(
         target,
         selectedPlatform,
-        detailsString
+        detailsString,
+        {
+          accountAge,
+          profilePicType,
+          postCount,
+          followers: followersCount,
+          following: followingCount,
+          bio: profileBio,
+          linkType,
+          unsolicitedDm,
+          askingMoneyOrCrypto,
+          promisingPrizeOrJob,
+          offPlatformRedirection,
+          hasBlueBadge,
+          hasMutualConnections,
+        }
       );
       clearInterval(stageInterval);
 
@@ -627,54 +755,285 @@ Verified by SYRA NOVA Neural Social Guard v1.0
               </div>
             )}
 
-            {/* Optional Bio & Profile Metadata Section */}
-            <div className="pt-2 border-t border-slate-800/80">
-              <button
-                type="button"
-                onClick={() => setShowAdvancedStats(!showAdvancedStats)}
-                className="flex items-center justify-between w-full text-xs font-semibold text-slate-400 hover:text-cyan-300 transition-colors"
-              >
-                <span>Add Bio Description & Follower Counts (Optional)</span>
-                <span className="text-cyan-400 font-mono text-[11px]">{showAdvancedStats ? "− Hide Details" : "+ Add Details"}</span>
-              </button>
+            {/* Comprehensive Forensic Profile Questionnaire */}
+            <div className="space-y-4 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                    Forensic Profile Audit Details
+                  </h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetForm}
+                  className="text-[11px] text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Reset Form</span>
+                </button>
+              </div>
 
-              {showAdvancedStats && (
-                <div className="mt-3 space-y-3 p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 animate-in fade-in duration-150">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">Profile Bio / Description</label>
-                    <textarea
-                      rows={2}
-                      placeholder="Paste bio description, external contact numbers, links or suspicious promises..."
-                      value={profileBio}
-                      onChange={(e) => setProfileBio(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 resize-none font-sans"
-                    />
-                  </div>
+              {/* 1. Profile Picture & Visual Identity */}
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1.5">
+                  1. Profile Photo / Visual Identity
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {[
+                    { id: "real_person", label: "Real Person (Multi-photos)", icon: "📸" },
+                    { id: "ai_model", label: "AI Model / Celebrity Pic", icon: "🎭" },
+                    { id: "brand_logo", label: "Brand / Company Logo", icon: "🏢" },
+                    { id: "default", label: "Default / No Avatar", icon: "👤" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setProfilePicType(opt.id as any)}
+                      className={`p-2 rounded-xl text-[11px] font-semibold text-left border transition-all ${
+                        profilePicType === opt.id
+                          ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                          : "bg-slate-950/60 text-slate-400 hover:text-slate-200 border-slate-800"
+                      }`}
+                    >
+                      <span className="mr-1.5">{opt.icon}</span>
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">Followers Count</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 14 or 250k"
-                        value={followersCount}
-                        onChange={(e) => setFollowersCount(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-300 mb-1">Following Count</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. 4,500"
-                        value={followingCount}
-                        onChange={(e) => setFollowingCount(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 font-mono"
-                      />
-                    </div>
+              {/* 2. Account Age & Posts History */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1.5">
+                    2. Estimated Account Age
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { id: "new", label: "⚡ < 1 Mo (New)" },
+                      { id: "recent", label: "📅 1 - 6 Months" },
+                      { id: "established", label: "🛡️ 1 - 2 Years" },
+                      { id: "old", label: "👑 2+ Years" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setAccountAge(opt.id as any)}
+                        className={`py-1.5 px-2 rounded-xl text-[10px] font-semibold border text-center transition-all ${
+                          accountAge === opt.id
+                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50"
+                            : "bg-slate-950/60 text-slate-400 border-slate-800"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              )}
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1.5">
+                    3. Total Published Posts
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { id: "zero", label: "❌ 0 Posts" },
+                      { id: "few", label: "🖼️ 1 - 5 Posts" },
+                      { id: "moderate", label: "📸 6 - 30 Posts" },
+                      { id: "many", label: "🌟 50+ Posts" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setPostCount(opt.id as any)}
+                        className={`py-1.5 px-2 rounded-xl text-[10px] font-semibold border text-center transition-all ${
+                          postCount === opt.id
+                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50"
+                            : "bg-slate-950/60 text-slate-400 border-slate-800"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Followers and Following Numbers */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    4. Followers Count
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 14 or 250k"
+                    value={followersCount}
+                    onChange={(e) => setFollowersCount(e.target.value)}
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    5. Following Count
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 4,500"
+                    value={followingCount}
+                    onChange={(e) => setFollowingCount(e.target.value)}
+                    className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* 4. Bio & External Links */}
+              <div className="space-y-2">
+                <label className="block text-[11px] font-semibold text-slate-300">
+                  6. Profile Bio Description
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Paste bio description, external contact numbers, links or suspicious promises..."
+                  value={profileBio}
+                  onChange={(e) => setProfileBio(e.target.value)}
+                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 resize-none font-sans"
+                />
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-400 mb-1">
+                    Bio External Link Type:
+                  </label>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[
+                      { id: "none", label: "No Link" },
+                      { id: "shortener", label: "✂️ Shortener (bit.ly/tinyurl)" },
+                      { id: "messaging_app", label: "💬 Telegram / WhatsApp (t.me/wa.me)" },
+                      { id: "suspicious_apk", label: "⚠️ Unverified APK / Crypto Link" },
+                      { id: "official_domain", label: "🌐 Verified Domain" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setLinkType(opt.id as any)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
+                          linkType === opt.id
+                            ? "bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-[0_0_8px_rgba(168,85,247,0.2)]"
+                            : "bg-slate-950/60 text-slate-400 border-slate-800"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Interaction & Behavioral Red Flags Checklist */}
+              <div className="space-y-2 pt-2 border-t border-slate-800/60">
+                <label className="block text-[11px] font-bold text-amber-300">
+                  7. Interaction Red Flags & Direct Behavior
+                </label>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAskingMoneyOrCrypto(!askingMoneyOrCrypto)}
+                    className={`p-2.5 rounded-xl border text-left text-xs transition-all flex items-start gap-2 ${
+                      askingMoneyOrCrypto
+                        ? "bg-red-500/20 border-red-500/60 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.2)]"
+                        : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-300"
+                    }`}
+                  >
+                    <span className="text-base">{askingMoneyOrCrypto ? "🚨" : "⚪"}</span>
+                    <div>
+                      <p className="font-bold text-[11px]">Asked for Money / Crypto / OTP</p>
+                      <p className="text-[10px] opacity-80">Requested financial payment, UPI PIN, or gift cards in DMs</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPromisingPrizeOrJob(!promisingPrizeOrJob)}
+                    className={`p-2.5 rounded-xl border text-left text-xs transition-all flex items-start gap-2 ${
+                      promisingPrizeOrJob
+                        ? "bg-red-500/20 border-red-500/60 text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.2)]"
+                        : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-300"
+                    }`}
+                  >
+                    <span className="text-base">{promisingPrizeOrJob ? "🎁" : "⚪"}</span>
+                    <div>
+                      <p className="font-bold text-[11px]">Promised Lottery / Free Prize / Job</p>
+                      <p className="text-[10px] opacity-80">Claims you won an iPhone, cash prize, or high return tasks</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setOffPlatformRedirection(!offPlatformRedirection)}
+                    className={`p-2.5 rounded-xl border text-left text-xs transition-all flex items-start gap-2 ${
+                      offPlatformRedirection
+                        ? "bg-amber-500/20 border-amber-500/60 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                        : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-300"
+                    }`}
+                  >
+                    <span className="text-base">{offPlatformRedirection ? "📲" : "⚪"}</span>
+                    <div>
+                      <p className="font-bold text-[11px]">Urged to Move Off-Platform</p>
+                      <p className="text-[10px] opacity-80">Insisted on private chats via Telegram, WhatsApp, or Chat</p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setUnsolicitedDm(!unsolicitedDm)}
+                    className={`p-2.5 rounded-xl border text-left text-xs transition-all flex items-start gap-2 ${
+                      unsolicitedDm
+                        ? "bg-amber-500/20 border-amber-500/60 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                        : "bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-300"
+                    }`}
+                  >
+                    <span className="text-base">{unsolicitedDm ? "⚠️" : "⚪"}</span>
+                    <div>
+                      <p className="font-bold text-[11px]">Unsolicited Cold DM</p>
+                      <p className="text-[10px] opacity-80">Messaged you first with no prior interaction or connection</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* 6. Trust & Verification Signals */}
+              <div className="space-y-1.5 pt-2 border-t border-slate-800/60">
+                <label className="block text-[11px] font-semibold text-slate-300">
+                  8. Platform Trust Signals
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setHasBlueBadge(!hasBlueBadge)}
+                    className={`p-2 rounded-xl border text-center text-xs font-semibold transition-all ${
+                      hasBlueBadge
+                        ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-[0_0_10px_rgba(34,197,94,0.2)]"
+                        : "bg-slate-950/60 border-slate-800 text-slate-400"
+                    }`}
+                  >
+                    <span>⭐ Official Blue/Gold Badge</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setHasMutualConnections(!hasMutualConnections)}
+                    className={`p-2 rounded-xl border text-center text-xs font-semibold transition-all ${
+                      hasMutualConnections
+                        ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-[0_0_10px_rgba(34,197,94,0.2)]"
+                        : "bg-slate-950/60 border-slate-800 text-slate-400"
+                    }`}
+                  >
+                    <span>👥 Known Mutual Followers</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Error Message Box */}
@@ -701,7 +1060,7 @@ Verified by SYRA NOVA Neural Social Guard v1.0
               ) : (
                 <>
                   <UserCheck className="w-4 h-4" />
-                  <span>Analyze Profile</span>
+                  <span>Run Deep Profile Forensic Audit</span>
                 </>
               )}
             </button>
