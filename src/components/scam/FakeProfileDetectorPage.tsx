@@ -38,6 +38,7 @@ import { useApp } from "../../context/AppContext";
 import { CircularProgress } from "../common/CircularProgress";
 import { ScanRecord } from "../../types";
 import { downloadReport } from "../../utils/exportReport";
+import { analyzeProfileWithAI } from "../../services/aiScanner";
 
 export const FakeProfileDetectorPage: React.FC = () => {
   const {
@@ -160,60 +161,35 @@ export const FakeProfileDetectorPage: React.FC = () => {
     }, 450);
 
     try {
-      const response = await fetch("/api/analyze/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: inputMode === "url" ? profileUrl : undefined,
-          username: inputMode === "username" ? target : undefined,
-          platform: selectedPlatform,
-          details: inputMode === "screenshot" ? "Uploaded profile capture with bio and follow ratios" : "",
-        }),
-      });
-
-      const data = await response.json();
+      const data = await analyzeProfileWithAI(
+        target,
+        selectedPlatform,
+        inputMode === "screenshot" ? "Uploaded profile capture with bio and follow ratios" : ""
+      );
       clearInterval(stageInterval);
 
       const savedRecord = addScan({
         type: "profile",
         platform: selectedPlatform,
         target,
-        riskScore: 100 - (data.authenticityScore ?? 25), // Risk score inverse
-        verdict: data.verdict ?? "Fake Profile Detected",
+        riskScore: 100 - data.authenticityScore,
+        verdict: data.verdict,
         category: `${selectedPlatform} Account Verification`,
-        confidence: data.confidence ?? 90,
-        indicators: data.riskIndicators ?? [
-          "Recently created account",
-          "Copied profile picture",
-          "Suspicious bio",
-          "Impersonation detected",
-        ],
-        explanation: data.explanation ?? "This account displays multiple traits characteristic of fake bot accounts.",
-        recommendations: data.recommendations ?? [
-          "Avoid sharing personal information",
-          "Verify identity through another channel",
-          "Block the account",
-          "Report the profile",
-        ],
+        confidence: data.confidence,
+        indicators: data.riskIndicators,
+        explanation: data.explanation,
+        recommendations: data.recommendations,
       });
 
       setActiveResult(savedRecord);
-      showToast("Profile Analyzed", `Authenticity Verdict: ${savedRecord.verdict}`, "success");
+      showToast(
+        "Profile Analyzed",
+        `Authenticity Verdict: ${savedRecord.verdict} (${data.authenticityScore}% Authentic)`,
+        data.verdict === "Genuine" ? "success" : data.verdict === "Suspicious" ? "warning" : "error"
+      );
     } catch (err) {
       clearInterval(stageInterval);
-      const fallbackRecord = addScan({
-        type: "profile",
-        platform: selectedPlatform,
-        target,
-        riskScore: 82,
-        verdict: "Fake Profile Detected",
-        category: `${selectedPlatform} Impersonation Check`,
-        confidence: 88,
-        indicators: ["Recently created account", "Suspicious bio", "External suspicious links", "Impersonation detected"],
-        explanation: "The account displays characteristics consistent with synthetic bot profiles and high-risk bio links.",
-        recommendations: ["Avoid sharing personal info", "Block and report account", "Do not click bio links"],
-      });
-      setActiveResult(fallbackRecord);
+      showToast("Analysis Error", "Failed to analyze profile. Please try again.", "error");
     } finally {
       setIsAnalyzing(false);
     }
