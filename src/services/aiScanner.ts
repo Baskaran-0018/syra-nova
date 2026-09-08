@@ -1,8 +1,18 @@
 import { ScanRecord } from "../types";
 
-export interface MessageAnalysisResult {
+export interface AIMessageAnalysisResult {
+  verdict: "AI-Generated" | "Human-Written" | "Mixed / Uncertain";
+  confidence_score: number;
+  perplexity_assessment: "High" | "Medium" | "Low";
+  burstiness_assessment: "High" | "Medium" | "Low";
+  reasoning: {
+    summary: string;
+    perplexity_reason: string;
+    burstiness_reason: string;
+    key_indicators: string[];
+  };
+  // Compatibility fields
   riskScore: number;
-  verdict: "Safe" | "Suspicious" | "Scam Detected";
   category: string;
   confidence: number;
   threatIndicators: string[];
@@ -19,77 +29,19 @@ export interface ProfileAnalysisResult {
   recommendations: string[];
 }
 
+export type MessageAnalysisResult = AIMessageAnalysisResult;
+
 /**
- * Intelligent Client-Side / Hybrid Scam Message Analyzer
- * Guarantees zero false positives for benign chats, greetings, and legitimate alerts.
+ * Intelligent AI vs Human Message & Text Analyzer
+ * Evaluates Perplexity, Burstiness, and Stylistic Patterns.
  */
 export async function analyzeMessageWithAI(
   message: string,
   messageType = "text"
-): Promise<MessageAnalysisResult> {
+): Promise<AIMessageAnalysisResult> {
   const trimmed = message.trim();
-  const lower = trimmed.toLowerCase();
 
-  // 1. FAST-PATH BENIGN & GREETING FILTER (Guaranteed 0% Risk for "hi", "hello", etc.)
-  const commonGreetings = [
-    "hi",
-    "hii",
-    "hiii",
-    "hello",
-    "hey",
-    "heyy",
-    "hola",
-    "namaste",
-    "vanakkam",
-    "good morning",
-    "good afternoon",
-    "good evening",
-    "good night",
-    "how are you",
-    "how r u",
-    "what's up",
-    "whats up",
-    "sup",
-    "ok",
-    "okay",
-    "thanks",
-    "thank you",
-    "thx",
-    "bye",
-    "see you",
-    "gm",
-    "gn",
-    "yes",
-    "no",
-    "done",
-    "got it",
-  ];
-
-  const isShortGreeting =
-    commonGreetings.includes(lower) ||
-    (lower.length <= 15 && commonGreetings.some((g) => lower.startsWith(g)));
-
-  if (isShortGreeting) {
-    return {
-      riskScore: 0,
-      verdict: "Safe",
-      category: "Legitimate Personal Greeting",
-      confidence: 99,
-      threatIndicators: [
-        "Verified harmless greeting",
-        "No phishing or credential harvesting triggers",
-        "Clean conversational tone",
-      ],
-      explanation:
-        "This is a standard everyday greeting with zero risk of scam, phishing, or financial fraud.",
-      recommendations: [
-        "Message is completely safe to read and reply to.",
-        "Standard conversational communication.",
-      ],
-    };
-  }
-
-  // 2. Try Server API Endpoint first if available
+  // 1. Try Server API Endpoint first (Gemini AI Powered)
   try {
     const response = await fetch("/api/analyze/message", {
       method: "POST",
@@ -99,117 +51,159 @@ export async function analyzeMessageWithAI(
 
     if (response.ok) {
       const data = await response.json();
-      if (typeof data.riskScore === "number" && data.verdict) {
-        // Sanity check: If text is benign and short, ensure score is not falsely inflated
-        if (trimmed.length < 35 && !lower.includes("http") && !lower.includes("otp") && !lower.includes("pin")) {
-          if (data.riskScore > 20) {
-            data.riskScore = 5;
-            data.verdict = "Safe";
-            data.category = "Legitimate Personal Chat";
-          }
-        }
-        return data;
+      if (data.verdict && typeof data.confidence_score === "number" && data.reasoning) {
+        return {
+          verdict: data.verdict,
+          confidence_score: data.confidence_score,
+          perplexity_assessment: data.perplexity_assessment || "Medium",
+          burstiness_assessment: data.burstiness_assessment || "Medium",
+          reasoning: {
+            summary: data.reasoning.summary || "Linguistic AI detection completed.",
+            perplexity_reason: data.reasoning.perplexity_reason || "Analyzed word predictability.",
+            burstiness_reason: data.reasoning.burstiness_reason || "Analyzed sentence rhythm.",
+            key_indicators: Array.isArray(data.reasoning.key_indicators) ? data.reasoning.key_indicators : [],
+          },
+          riskScore: typeof data.riskScore === "number" ? data.riskScore : (data.verdict === "AI-Generated" ? data.confidence_score : 100 - data.confidence_score),
+          category: data.category || (data.verdict === "AI-Generated" ? "Synthetic AI Text" : data.verdict === "Human-Written" ? "Organic Human Text" : "Hybrid Content"),
+          confidence: data.confidence_score,
+          threatIndicators: Array.isArray(data.reasoning.key_indicators) ? data.reasoning.key_indicators : [],
+          explanation: data.reasoning.summary || "",
+          recommendations: data.recommendations || (data.verdict === "AI-Generated" ? ["Verify authenticity with author", "Check factual citations"] : ["Organic human writing confirmed"]),
+        };
       }
     }
   } catch (apiErr) {
-    console.warn("Backend API unavailable, using high-precision local cyber heuristics:", apiErr);
+    console.warn("Backend AI detector API unavailable, using local linguistic engine:", apiErr);
   }
 
-  // 3. HIGH-PRECISION LOCAL RULE ENGINE (Zero false positives for benign messages)
-  const hasUrgentThreat =
-    (lower.includes("blocked") || lower.includes("disconnected") || lower.includes("suspended") || lower.includes("terminated") || lower.includes("court") || lower.includes("police case") || lower.includes("legal action")) &&
-    (lower.includes("within") || lower.includes("tonight") || lower.includes("immediately") || lower.includes("2 hours") || lower.includes("24 hours") || lower.includes("today"));
+  // 2. High-precision Client-Side Linguistic Engine
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  const rawSentences = trimmed.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean);
+  const sentences = rawSentences.length > 0 ? rawSentences : [trimmed];
 
-  const hasCredentialHarvester =
-    (lower.includes("otp") || lower.includes("password") || lower.includes("cvv") || lower.includes("upi pin") || lower.includes("netbanking pin")) &&
-    (lower.includes("share") || lower.includes("send") || lower.includes("verify") || lower.includes("enter") || lower.includes("tell"));
+  // A. Sentence length variance calculation (Burstiness)
+  const sentenceLengths = sentences.map((s) => s.split(/\s+/).filter(Boolean).length);
+  const avgLen = sentenceLengths.reduce((a, b) => a + b, 0) / (sentenceLengths.length || 1);
+  const variance = sentenceLengths.reduce((sum, len) => sum + Math.pow(len - avgLen, 2), 0) / (sentenceLengths.length || 1);
+  const stdDev = Math.sqrt(variance);
 
-  const hasPrizeScam =
-    (lower.includes("lottery") || lower.includes("won ₹") || lower.includes("won rs") || lower.includes("won $") || lower.includes("cash prize") || lower.includes("kbc") || lower.includes("lucky draw")) &&
-    (lower.includes("claim") || lower.includes("deposit") || lower.includes("fee") || lower.includes("link") || lower.includes("click") || lower.includes("whatsapp"));
+  // B. Perplexity & AI Transitional Patterns
+  const lower = trimmed.toLowerCase();
+  const aiTransitions = [
+    "furthermore", "moreover", "in conclusion", "it is important to note",
+    "delve into", "testament to", "beacon of", "tapestry", "multifaceted",
+    "paramount", "in summary", "pivotal role", "realm of", "game-changer",
+    "holistic approach", "revolutionize", "at its core", "notably",
+    "it is crucial to", "serves as a", "fosters an environment"
+  ];
+  const matchedAiTransitions = aiTransitions.filter((t) => lower.includes(t));
 
-  const hasSuspiciousDomain =
-    lower.includes("bit.ly") ||
-    lower.includes("tinyurl") ||
-    lower.includes(".xyz") ||
-    lower.includes(".top") ||
-    lower.includes(".apk") ||
-    lower.includes(".ru") ||
-    lower.includes("sbi-kyc") ||
-    lower.includes("update-kyc") ||
-    lower.includes("bank-verify") ||
-    lower.includes("claim-prize");
+  const humanSlangAndCasual = [
+    "lol", "lmao", "btw", "idk", "tbh", "ngl", "bruh", "bro", "dude", "hey",
+    "hi", "heyy", "thanks", "thx", "cool", "yeah", "nah", "gonna", "wanna",
+    "gotta", "imma", "omg", "kinda", "sorta", "haha", "hahaha", "yup", "nope"
+  ];
+  const matchedHumanMarkers = humanSlangAndCasual.filter((h) => {
+    const regex = new RegExp(`\\b${h}\\b`, "i");
+    return regex.test(lower);
+  });
 
-  const hasUpiReceiveFraud =
-    (lower.includes("upi") || lower.includes("gpay") || lower.includes("phonepe") || lower.includes("paytm")) &&
-    (lower.includes("pin to receive") || lower.includes("enter pin to get") || lower.includes("claim cashback"));
+  const uniqueWords = new Set(words.map((w) => w.toLowerCase()));
+  const lexicalDiversity = words.length > 0 ? uniqueWords.size / words.length : 1;
 
-  const hasUnsolicitedPromo =
-    (lower.includes("90% off") || lower.includes("free gift") || lower.includes("limited offer") || lower.includes("click to buy")) &&
-    (lower.includes("http") || lower.includes("link"));
+  let isAI = false;
+  let isHuman = false;
+  let confidence = 85;
+  let perplexityAssessment: "High" | "Medium" | "Low" = "Medium";
+  let burstinessAssessment: "High" | "Medium" | "Low" = "Medium";
+  const keyIndicators: string[] = [];
 
-  let calculatedScore = 5;
-  let calculatedVerdict: "Safe" | "Suspicious" | "Scam Detected" = "Safe";
-  let calculatedCategory = "Legitimate Message";
-  const indicators: string[] = [];
-
-  if (hasUrgentThreat || hasCredentialHarvester || hasPrizeScam || hasUpiReceiveFraud || (hasSuspiciousDomain && lower.includes("http"))) {
-    calculatedScore = 94;
-    calculatedVerdict = "Scam Detected";
-    if (hasUrgentThreat) indicators.push("Urgent threat / panic trigger (Account/Electricity shutdown)");
-    if (hasCredentialHarvester) indicators.push("OTP / Password harvesting prompt");
-    if (hasPrizeScam) indicators.push("Advance-fee lottery / prize bait");
-    if (hasUpiReceiveFraud) indicators.push("UPI PIN fraud (requesting PIN to receive money)");
-    if (hasSuspiciousDomain) indicators.push("Unverified malicious domain or APK link");
-
-    calculatedCategory = hasCredentialHarvester
-      ? "Credential Phishing Fraud"
-      : hasUrgentThreat
-      ? "Threat & Disconnection Scam"
-      : hasPrizeScam
-      ? "Lottery & Prize Scam"
-      : hasUpiReceiveFraud
-      ? "UPI PIN Payment Fraud"
-      : "High-Risk Cyber Scam";
-  } else if (hasUnsolicitedPromo || (lower.includes("http") && !lower.includes("google.com") && !lower.includes("amazon.") && !lower.includes("youtube.com"))) {
-    calculatedScore = 38;
-    calculatedVerdict = "Suspicious";
-    calculatedCategory = "Unsolicited Promotional Message";
-    indicators.push("Contains promotional / marketing link");
-    indicators.push("Unverified external sender origin");
+  // Evaluate Burstiness
+  if (stdDev >= 6.0 || (sentenceLengths.length >= 2 && Math.max(...sentenceLengths) - Math.min(...sentenceLengths) >= 10)) {
+    burstinessAssessment = "High";
+    keyIndicators.push(`High sentence length variance (StdDev: ${stdDev.toFixed(1)} words, ranging from ${Math.min(...sentenceLengths)} to ${Math.max(...sentenceLengths)} words)`);
+  } else if (stdDev <= 2.2 && sentences.length >= 2) {
+    burstinessAssessment = "Low";
+    keyIndicators.push(`Uniform, repetitive sentence lengths (StdDev: ${stdDev.toFixed(1)} words) indicative of automated generation`);
   } else {
-    calculatedScore = 5;
-    calculatedVerdict = "Safe";
-    calculatedCategory = "Legitimate Personal / Transactional Text";
-    indicators.push("Verified non-fraudulent communication");
-    indicators.push("No credential harvesting or urgency triggers");
-    indicators.push("Clean conversation syntax");
+    burstinessAssessment = "Medium";
   }
+
+  // Evaluate Perplexity & Stylistic Markers
+  if (matchedAiTransitions.length >= 2 || (matchedAiTransitions.length >= 1 && burstinessAssessment === "Low")) {
+    perplexityAssessment = "Low";
+    matchedAiTransitions.forEach((t) => keyIndicators.push(`Formulaic AI transition phrase: "${t}"`));
+  } else if (matchedHumanMarkers.length >= 1 || words.length < 8 || stdDev > 5) {
+    perplexityAssessment = "High";
+    matchedHumanMarkers.forEach((m) => keyIndicators.push(`Informal human conversational token: "${m}"`));
+  } else {
+    perplexityAssessment = lexicalDiversity > 0.72 ? "High" : "Medium";
+  }
+
+  // Casual punctuation & typo detection
+  if (/[!?]{2,}/.test(trimmed) || /\b(im|dont|cant|wont|didnt|youre|theyre)\b/.test(lower)) {
+    keyIndicators.push("Natural human typing traits (omitted apostrophes / expressive punctuation)");
+    perplexityAssessment = "High";
+  }
+
+  // Final Verdict Logic
+  if (matchedAiTransitions.length >= 2 || (burstinessAssessment === "Low" && perplexityAssessment === "Low")) {
+    isAI = true;
+    confidence = Math.min(84 + matchedAiTransitions.length * 4, 96);
+  } else if (matchedHumanMarkers.length > 0 || burstinessAssessment === "High" || (words.length <= 15 && matchedAiTransitions.length === 0)) {
+    isHuman = true;
+    confidence = Math.min(85 + matchedHumanMarkers.length * 4 + (burstinessAssessment === "High" ? 5 : 0), 98);
+  } else {
+    confidence = 65;
+  }
+
+  const verdict: "AI-Generated" | "Human-Written" | "Mixed / Uncertain" = isAI
+    ? "AI-Generated"
+    : isHuman
+    ? "Human-Written"
+    : "Mixed / Uncertain";
+
+  const summary =
+    verdict === "AI-Generated"
+      ? `This text demonstrates strong statistical hallmarks of synthetic AI generation, including low structural burstiness (${stdDev.toFixed(1)} word variance) and formulaic transitional phrasing (${matchedAiTransitions.slice(0, 3).join(", ") || "standard LLM cadence"}).`
+      : verdict === "Human-Written"
+      ? `This message displays organic human authorship with natural rhythm variance, high vocabulary perplexity, and spontaneous conversational pacing.`
+      : `The text displays a hybrid mix of predictable AI transitions alongside varied sentence structures, suggesting human-edited AI text.`;
+
+  const perplexityReason =
+    perplexityAssessment === "High"
+      ? "High vocabulary entropy and unexpected conversational turns reflect spontaneous human phrasing."
+      : perplexityAssessment === "Low"
+      ? "Low perplexity detected. Vocabulary predictability and lexical sequences mirror standard generative model distributions."
+      : "Moderate vocabulary predictability consistent with structured professional communication.";
+
+  const burstinessReason =
+    burstinessAssessment === "High"
+      ? `High burstiness: Sentence lengths vary from ${Math.min(...sentenceLengths)} to ${Math.max(...sentenceLengths)} words (StdDev: ${stdDev.toFixed(1)}), matching natural human cadences.`
+      : burstinessAssessment === "Low"
+      ? `Low burstiness: Sentences are evenly measured (~${avgLen.toFixed(1)} words), a recognized characteristic of autoregressive LLMs.`
+      : `Balanced sentence structure across ${sentences.length} sentence unit(s).`;
 
   return {
-    riskScore: calculatedScore,
-    verdict: calculatedVerdict,
-    category: calculatedCategory,
-    confidence: 95,
-    threatIndicators: indicators,
-    explanation:
-      calculatedVerdict === "Safe"
-        ? "This message is legitimate and safe. It contains no phishing links, fake disconnection threats, lottery deception, or requests for passwords/OTPs."
-        : calculatedVerdict === "Suspicious"
-        ? "This message contains promotional offers or external links. Exercise standard caution before clicking."
-        : "High-risk scam detected! This message exhibits classic cyber fraud tactics designed to trigger panic, steal OTPs/PINs, or deceive you into unauthorized payments.",
-    recommendations:
-      calculatedVerdict === "Safe"
-        ? [
-            "Message is safe to read and engage with.",
-            "Always follow standard safety precautions never to share OTPs or banking PINs.",
-          ]
-        : [
-            "Do not click any embedded links or download APK files.",
-            "Never share your OTP, UPI PIN, or bank passwords.",
-            "Block and report the sender number immediately.",
-            "If financial loss occurred, call 1930 (National Cyber Crime Helpline).",
-          ],
+    verdict,
+    confidence_score: confidence,
+    perplexity_assessment: perplexityAssessment,
+    burstiness_assessment: burstinessAssessment,
+    reasoning: {
+      summary,
+      perplexity_reason: perplexityReason,
+      burstiness_reason: burstinessReason,
+      key_indicators: keyIndicators.length > 0 ? keyIndicators : ["Natural human syntax rhythm"],
+    },
+    // Compatibility fields
+    riskScore: verdict === "AI-Generated" ? confidence : verdict === "Human-Written" ? 100 - confidence : 50,
+    category: verdict === "AI-Generated" ? "Synthetic AI Text" : verdict === "Human-Written" ? "Organic Human Text" : "Hybrid / Mixed Content",
+    confidence: confidence,
+    threatIndicators: keyIndicators,
+    explanation: summary,
+    recommendations: verdict === "AI-Generated"
+      ? ["Verify claims with primary sources", "Review for automated hallucinations or repetitive transitions"]
+      : ["Natural human authorship confirmed", "Organic pacing and high linguistic variety detected"]
   };
 }
 

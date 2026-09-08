@@ -50,12 +50,12 @@ export const ScamShieldHubPage: React.FC = () => {
   const modules = [
     {
       id: "message-detector" as AppView,
-      title: "Scam Message Detector",
-      tagline: "Neural SMS, WhatsApp & Email Scanner",
-      desc: "Analyze suspicious text messages, lottery SMS, bank KYC warnings, and screenshot uploads.",
+      title: "AI Message Detector",
+      tagline: "Perplexity & Burstiness Forensic Analyzer",
+      desc: "Detect AI-generated text vs human writing across SMS, emails, essays, and conversational chats.",
       icon: MessageSquareWarning,
       gradient: "from-cyan-500 to-blue-600",
-      stats: "99.4% Accuracy",
+      stats: "AI vs Human Forensics",
     },
     {
       id: "profile-detector" as AppView,

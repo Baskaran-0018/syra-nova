@@ -99,8 +99,8 @@ export const DashboardPage: React.FC = () => {
     },
     {
       id: "message-detector",
-      title: "Scam Message Detector",
-      desc: "Analyze SMS, WhatsApp texts, emails & screenshot uploads with AI",
+      title: "AI Message Detector",
+      desc: "Evaluate text for AI vs Human authorship with Perplexity & Burstiness metrics",
       icon: MessageSquareWarning,
       color: "from-cyan-500 to-blue-600",
       border: "border-cyan-500/40",

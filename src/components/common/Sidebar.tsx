@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { id: "vault", label: "Password & Data Vault", icon: KeyRound, badge: "Vault", badgeColor: "bg-purple-500/20 text-purple-300", category: "Core Protection" },
     { id: "history", label: "Search & Scan History", icon: HistoryIcon, badge: "Live", badgeColor: "bg-cyan-500/20 text-cyan-300", category: "Core Protection" },
     { id: "scam-shield", label: "Scam Shield AI", icon: Shield, category: "Core Protection" },
-    { id: "message-detector", label: "Scam Message Detector", icon: MessageSquareWarning, category: "Core Protection" },
+    { id: "message-detector", label: "AI Message Detector", icon: MessageSquareWarning, badge: "AI", badgeColor: "bg-purple-500/20 text-purple-300", category: "Core Protection" },
     { id: "profile-detector", label: "Fake Profile Detector", icon: UserCheck, category: "Core Protection" },
     { id: "identity-guardian", label: "Digital Identity Guardian", icon: Fingerprint, category: "Core Protection" },
     { id: "deepfake-detection", label: "Deepfake & Voice AI", icon: Video, category: "Advanced AI" },

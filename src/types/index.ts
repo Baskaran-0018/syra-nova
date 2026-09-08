@@ -58,9 +58,18 @@ export interface ScanRecord {
   type: "message" | "profile" | "website" | "qr" | "file" | "voice" | "video";
   target: string;
   riskScore: number; // 0 - 100
-  verdict: "Safe" | "Suspicious" | "Scam Detected" | "Genuine" | "Fake Profile Detected" | "Dangerous";
+  verdict: "AI-Generated" | "Human-Written" | "Mixed / Uncertain" | "Safe" | "Suspicious" | "Scam Detected" | "Genuine" | "Fake Profile Detected" | "Dangerous";
   category: string;
   confidence: number;
+  confidence_score?: number;
+  perplexity_assessment?: "High" | "Medium" | "Low";
+  burstiness_assessment?: "High" | "Medium" | "Low";
+  reasoning?: {
+    summary: string;
+    perplexity_reason: string;
+    burstiness_reason: string;
+    key_indicators: string[];
+  };
   indicators: string[];
   explanation: string;
   recommendations: string[];
@@ -133,7 +142,7 @@ export interface SearchHistoryItem {
   timestamp: string;
   query: string;
   category: HistoryCategory;
-  verdict?: "Safe" | "Suspicious" | "Scam Detected" | "Genuine" | "Fake Profile Detected" | "Dangerous" | "Clean" | "Breached" | "High Risk" | "Processed";
+  verdict?: "AI-Generated" | "Human-Written" | "Mixed / Uncertain" | "Safe" | "Suspicious" | "Scam Detected" | "Genuine" | "Fake Profile Detected" | "Dangerous" | "Clean" | "Breached" | "High Risk" | "Processed";
   riskScore?: number;
   details?: string;
   targetView?: AppView;
